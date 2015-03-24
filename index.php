@@ -1,7 +1,7 @@
 <?php
 	$conn = '{imap.gmail.com:993/imap/ssl}';
-	$login = 'teste';
-	$passwd = '123456';
+	$login = 'usuario';
+	$passwd = 'senha';
 
 	// Open connection
 	$mailbox = imap_open( $conn, $login, $passwd );
