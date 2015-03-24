@@ -54,7 +54,6 @@
 			{
 				$this->error = $e->getMessage();
 				$this->errors = imap_errors();
-				//die( $e->getMessage() );
 			}
 		}
 
@@ -69,7 +68,8 @@
 
 		/*
 		 *	Método: getError()
-		 *	Descrição: 
+		 *	Descrição: Retorna a última mensagem de erro.
+		 *	@return = String.
 		 */
 		public function getError()
 		{
@@ -78,13 +78,12 @@
 
 		/*
 		 *	Método: getErrors()
-		 *	Descrição: 
+		 *	Descrição: Retorna mensagens de erro do imap.
+		 *	@return = Array.
 		 */
 		public function getErrors()
 		{
-			echo '<pre>';
-			print_r( $this->errors );
-			echo '</pre>';
+			return $this->errors;
 		}
 
 	}
