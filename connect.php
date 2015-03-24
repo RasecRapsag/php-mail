@@ -7,5 +7,7 @@
 
 	echo '<br>';
 	echo 'Erro: ' . $mailbox->getError() . '<br>';
-	$mailbox->getErrors();
+	echo '<pre>';
+	print_r( $mailbox->getErrors() );
+	echo '</pre>';
 ?>
