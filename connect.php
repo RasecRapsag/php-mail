@@ -18,9 +18,9 @@
 		echo 'Emails: ' . $mailbox->getNumMsgs();
 		echo '<br>';
 		//echo 'Recentes: ' . $mailbox->getNumRecent();
-		$mailbox->changeMailbox( 'Steam' );
-		echo 'Emails: ' . $mailbox->getNumMsgs();		
-		echo '<br>';
+		//$mailbox->changeMailbox( 'Steam' );
+		//echo 'Emails: ' . $mailbox->getNumMsgs();		
+		//echo '<br>';
 	}
 	else
 	{
