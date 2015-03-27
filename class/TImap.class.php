@@ -36,39 +36,46 @@
 		private $passwd;
 
 		/**
-		 *	Recurso com informações de IMAP.
+		 *	Recurso de stream com informações de IMAP.
 		 *	@access private
 		 *	@var resource
 		 */
 		private $imap;
 
 		/**
+		 *	Pastas de correio eletronico.
+		 *	@access private
+		 *	@var array
+		 */
+		private $folders = array();
+
+		/**
 		 *	Caixa de correio atual.
 		 *	@access private
 		 *	@var string
 		 */
-		private $mailbox;
+		private $mailbox = null;
 
 		/**
 		 *	Informa se o último comando teve erro.
 		 *	@access private
 		 *	@var bool
 		 */
-		private $error;
+		private $error = false;
 
 		/**
 		 *	Mensagem do último erro.
 		 *	@access private
 		 *	@var string
 		 */
-		private $error_msg;
+		private $error_msg = null;
 
 		/**
 		 *	Mensagem ocorridas no protocolo IMAP.
 		 *	@access private
 		 *	@var array
 		 */
-		private $error_imap;
+		private $error_imap = null;
 
 		/**
 		 *	Construtor da classe.
@@ -85,11 +92,10 @@
 			$this->server = $server;
 			$this->login = $login;
 			$this->passwd = $passwd;
-			$this->mailbox = null;
-			$this->error = false;
-			$this->error_msg = null;
-			$this->error_impa = null;
 			$this->connect();
+
+			if( !$this->error )
+				$this->mailboxes();
 		}
 		
 		/**
@@ -105,8 +111,7 @@
 		}
 
 		/**
-		 *	Método de conexão.
-		 *	Faz a conexão com o servidor IMAP.
+		 *	Método que faz a conexão com o servidor IMAP.
 		 *	
 		 *	@access private
 		 *	@throws Exceção se não conseguir conectar no servidor.
@@ -115,32 +120,31 @@
 		{
 			try
 			{
-				$this->imap = @imap_open( $this->server, $this->login, $this->passwd, OP_READONLY );
-				if ( !$this->imap )
+				$this->imap = @imap_open( $this->server, $this->login, $this->passwd, OP_HALFOPEN );
+				if( !$this->imap )
 					throw new Exception( 'Não foi possível estabelecer conexão com o servidor IMAP!', 1 );
 			}
-			catch ( Exception $e )
+			catch( Exception $e )
 			{
 				$this->error = true;
 				$this->error_msg = $e->getMessage();
 				$this->error_imap = @imap_errors();
 			}
-			$check = imap_mailboxmsginfo( $this->imap );
-			echo '<br>';
-			echo 'Date: ' . $check->Date . '<br>';
-			echo 'Driver: ' . $check->Driver . '<br>';
-			echo 'Mailbox: ' . $check->Mailbox . '<br>';
-			echo 'Messages: ' . $check->Nmsgs . '<br>';
-			echo 'Recent: ' . $check->Recent . '<br>';
-			echo 'Unread: ' . $check->Unread . '<br>';
-			echo 'Deleted: ' . $check->Deleted . '<br>';
-			echo 'Size: ' . $check->Size . '<br>';			
-			echo '<br>';
+			// $check = imap_mailboxmsginfo( $this->imap );
+			// echo '<br>';
+			// echo 'Date: ' . $check->Date . '<br>';
+			// echo 'Driver: ' . $check->Driver . '<br>';
+			// echo 'Mailbox: ' . $check->Mailbox . '<br>';
+			// echo 'Messages: ' . $check->Nmsgs . '<br>';
+			// echo 'Recent: ' . $check->Recent . '<br>';
+			// echo 'Unread: ' . $check->Unread . '<br>';
+			// echo 'Deleted: ' . $check->Deleted . '<br>';
+			// echo 'Size: ' . $check->Size . '<br>';			
+			// echo '<br>';
 		}
 
 		/**
-		 *	Método de desconexão.
-		 *	Fecha a conexão com o servidor IMAP.
+		 *	Método que fecha a conexão com o servidor IMAP.
 		 *	
 		 *	@access private
 		 */
@@ -150,8 +154,7 @@
 		}
 
 		/**
-		 *	Método que retorna status. 
-		 *	Retorna status do último comando.
+		 *	Método que retorna o status do último comando.
 		 *	
 		 *	@access public
 		 *	@return bool Retorna status.
@@ -162,8 +165,7 @@
 		}
 
 		/**
-		 *	Método que retorna o erro.
-		 *	Retorna última mensagem de erro.
+		 *	Método que retorna a última mensagem de erro.
 		 *	
 		 *	@access public
 		 *	@return string Retorna a mensagem do erro.
@@ -174,8 +176,7 @@
 		}
 
 		/**
-		 *	Método que retorna erros.
-		 *	Retorna mensagens de erro gerados pelo IMAP.
+		 *	Método que retorna as mensagens de erro gerados pelo IMAP.
 		 *	
 		 *	@access public
 		 *	@return array Retorna mensagens de erro.
@@ -186,8 +187,52 @@
 		}
 
 		/**
-		 *	Método de checagem de caixa de correio.
-		 *	Faz a checagem da caixa de correio atual.
+		 *	Método que busca as pastas do servidor de email.
+		 *	
+		 *	@access private
+		 */
+		private function mailboxes()
+		{
+			try
+			{
+				$folders = @imap_list( $this->imap, $this->server, '*' );
+				if( !$folders )
+					throw new Exception( 'Não foi possível resgatar as pastas do servidor.', 2 );
+				else
+					foreach( $folders as $folder )
+						array_push( $this->folders, str_replace( $this->server, '', imap_utf7_decode( $folder ) ) );
+			}
+			catch( Exception $e )
+			{
+				$this->error = true;
+				$this->error_msg = $e->getMessage();
+			}
+		}
+
+		/**
+		 *	Método que retorna as pastas existentes no servidor de emaul.
+		 *
+		 *	@access private
+		 *	@return array Retorna as pastas do email.
+		 */
+		public function getFolders()
+		{
+			return $this->folders;
+		}
+
+		/**
+		 *	Método que retorna a quantidade de pastas no servidor de email.
+		 *	
+		 *	@access public
+		 *	@return integer Retorna a quantidade de pastas.
+		 */
+		public function getNumFolders()
+		{
+			return count( $this->folders );
+		}
+
+		/**
+		 *	Método que faz a checagem da caixa de correio atual.
 		 *	
 		 *	@todo Repensar a forma de utilização deste método, o atributo é mailbox.
 		 *	@access private
@@ -199,9 +244,9 @@
 			{
 				$this->mailbox = @imap_check( $this->imap );
 				if( !$this->mailbox )
-					throw new Exception("Não foi possível checar caixa de correio atual.", 2 );
+					throw new Exception( 'Não foi possível checar caixa de correio atual.', 3 );
 			}
-			catch ( Exception $e )
+			catch( Exception $e )
 			{
 				$this->error = true;
 				$this->error_msg = $e->getMessage();
@@ -213,8 +258,7 @@
 		}
 
 		/**
-		 *	Método que conta mensagens.
-		 *	Retorna a quantidade de e-mails da caixa de correio atual.
+		 *	Método que retorna a quantidade de e-mails da caixa de correio atual.
 		 *	
 		 *	@access public
 		 *	@return integer Retorna a quantidade de mensagens.
@@ -225,8 +269,7 @@
 		}
 
 		/**
-		 *	Método que conta mensagens recentes.
-		 *	Retorna a quantidade de e-mails recentes da caixa de correio atual.
+		 *	Método que retorna a quantidade de e-mails recentes da caixa de correio atual.
 		 *	
 		 *	@access public
 		 *	@return integer Retorna quantidade de mensagens recentes.
@@ -237,8 +280,7 @@
 		}
 
 		/**
-		 *	Método altera caixa de correio.
-		 *	Seleciona uma caixa de correio específica.
+		 *	Método que seleciona uma caixa de correio específica.
 		 *	
 		 *	@access public
 		 *	@param string $folder

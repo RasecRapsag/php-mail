@@ -15,19 +15,20 @@
 	{
 		echo 'OK';
 		echo '<br>';
-		echo 'Emails: ' . $mailbox->getNumMsgs();
-		echo '<br>';
+		//echo 'Emails: ' . $mailbox->getNumMsgs();
+		//echo '<br>';
 		//echo 'Recentes: ' . $mailbox->getNumRecent();
 		//$mailbox->changeMailbox( 'Steam' );
 		//echo 'Emails: ' . $mailbox->getNumMsgs();		
 		//echo '<br>';
+		echo 'Qde de pastas: ' . $mailbox->getNumFolders();
+		echo '<pre>';
+		print_r( $mailbox->getFolders() );
+		echo '</pre>';
 	}
 	else
 	{
 		echo 'Erro: ' . $mailbox->getError();
-		echo '<pre>';
-		print_r( $mailbox->getErrors() );
-		echo '</pre>';
 	}
 
 	echo '<br><br>';
