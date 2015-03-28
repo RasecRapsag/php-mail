@@ -1,14 +1,15 @@
 <?php
 	/**
 	 *	Classe para gerenciar recursos de correio eletrônico por meio do protocolo Imap.
-	 *	Esta classe foi criada no dia 23/03/2015.
+	 *	Criado no dia 23/03/2015.
 	 *	
 	 *	@author Cesar A. Gaspar <rasec.rapsag@gmail.com>
 	 *	@version v 0.1
 	 *	@copyright Copyright (c) 2015, Cesar A. Gaspar
-	 *	@license http://opensource.org/licenses/gpl-license.php
+	 *	@license GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+	 *	@see https://github.com/RasecRapsag/php-mail
 	 *	@access public
-	 *	@package Imap
+	 *	@package Mail
 	 *	@subpackage TImap
 	 *	@example connect.php
 	 */
@@ -165,6 +166,50 @@
 		}
 
 		/**
+		 *	Método que retorna o status do último comando.
+		 *	
+		 *	@access public
+		 *	@return bool Retorna status.
+		 */
+		public function getStatus()
+		{
+			return !$this->error;
+		}
+
+		/**
+		 *	Método que retorna a última mensagem de erro.
+		 *	
+		 *	@access public
+		 *	@return string Retorna a mensagem do erro.
+		 */
+		public function getError()
+		{
+			return $this->error_msg;
+		}
+
+		/**
+		 *	Método que retorna a quantidade de pastas no servidor de email.
+		 *	
+		 *	@access public
+		 *	@return integer Retorna a quantidade de pastas.
+		 */
+		public function getNumFolders()
+		{
+			return count( $this->folders );
+		}
+
+		/**
+		 *	Método que retorna as pastas existentes no servidor de emaul.
+		 *
+		 *	@access private
+		 *	@return array Retorna as pastas do email.
+		 */
+		public function getFolders()
+		{
+			return $this->folders;
+		}
+
+		/**
 		 *	Método que seleciona uma caixa de correio específica.
 		 *	
 		 *	@access public
@@ -189,39 +234,6 @@
 		}
 
 		/**
-		 *	Método que retorna o status do último comando.
-		 *	
-		 *	@access public
-		 *	@return bool Retorna status.
-		 */
-		public function getStatus()
-		{
-			return !$this->error;
-		}
-
-		/**
-		 *	Método que retorna a última mensagem de erro.
-		 *	
-		 *	@access public
-		 *	@return string Retorna a mensagem do erro.
-		 */
-		public function getError()
-		{
-			return $this->error_msg;
-		}
-
-		/**
-		 *	Método que retorna as pastas existentes no servidor de emaul.
-		 *
-		 *	@access private
-		 *	@return array Retorna as pastas do email.
-		 */
-		public function getFolders()
-		{
-			return $this->folders;
-		}
-
-		/**
 		 *	Método que retorna a pasta atual selecionada.
 		 *	
 		 *	@access public
@@ -233,40 +245,108 @@
 		}
 
 		/**
-		 *	Método que retorna a quantidade de pastas no servidor de email.
+		 *	Método que cria uma pasta no servidor de email.
 		 *	
 		 *	@access public
-		 *	@return integer Retorna a quantidade de pastas.
+		 *	@param string $name
+		 *	@return bool Retorna verdadeiro ou falso para criação da pasta.
 		 */
-		public function getNumFolders()
+		public function createFolder( $name )
 		{
-			return count( $this->folders );
+			if( !$this->error )
+			{
+				try
+				{
+					$result = @imap_createmailbox( $this->imap, imap_utf7_encode( $this->server . $name ) );
+					if( !$result )
+					{
+						$error = @imap_errors();
+						if( substr_count( strtoupper( $error[0] ), 'ALREADYEXISTS' ) )
+							throw new Exception( 'Não foi possível criar a pasta. A pasta já existe.', 202 );
+						else
+							throw new Exception( 'Não foi possível criar a pasta.', 297 );
+					}
+					else
+						return true;
+				}
+				catch( Exception $e )
+				{
+					$this->error = true;
+					$this->error_msg = $e->getCode() . ' - ' . $e->getMessage();
+				}
+			}
+			return false;
 		}
 
 		/**
-		 *	Método que faz a checagem da caixa de correio atual.
+		 *	Método que remove uma pasta no servidor de email.
 		 *	
-		 *	@todo Repensar a forma de utilização deste método, o atributo é mailbox.
-		 *	@access private
-		 *	@throws Exceção se não conseguir checar o correio.
-		 *	@return void
+		 *	@access public
+		 *	@param string $name
+		 *	@return bool Retorna verdadeiro ou falso para exclusão da pasta.
 		 */
-		private function check()
+		public function removeFolder( $name )
 		{
-			try
+			if( !$this->error )
 			{
-				$this->mailbox = @imap_check( $this->imap );
-				if( !$this->mailbox )
-					throw new Exception( 'Não foi possível checar caixa de correio atual.', 300 );
+				try
+				{
+					$result = @imap_deletemailbox( $this->imap, imap_utf7_encode( $this->server . $name ) );
+					if( !$result )
+					{
+						$error = @imap_errors();
+						if( substr_count( strtoupper( $error[0] ), 'NONEXISTENT' ) )
+							throw new Exception( 'Não foi possível remover a pasta. A pasta não existe.', 203 );
+						else
+							throw new Exception( 'Não foi possível remover as pasta.', 298 );
+					}
+					else
+						return true;
+				}
+				catch( Exception $e )
+				{
+					$this->error = true;
+					$this->error_msg = $e->getCode() . ' -'  . $e->getMessage();
+				}
 			}
-			catch( Exception $e )
+			return false;
+		}
+
+		/**
+		 *	Método que renomeia uma pasta no servidor de email.
+		 *	
+		 *	@access public
+		 *	@param string $old_name
+		 *	@param string $new_name
+		 *	@return bool Retorna verdadeiro ou falso se renomeou a pasta.
+		 */
+		public function renameFolder( $old_name, $new_name )
+		{
+			if( !$this->error )
 			{
-				$this->error = true;
-				$this->error_msg = $e->getMessage();
+				try
+				{
+					$result = @imap_renamemailbox( $this->imap, $this->server . $old_name, $this->server . $new_name );
+					if( !$result )
+					{
+						$error = @imap_errors();
+						if( substr_count( strtoupper( $error[0] ), 'UNKNOWN' ) )
+							throw new Exception( 'Não foi possível renomear a pasta. A pasta não foi encontrada.', 204 );
+						elseif ( substr_count( strtoupper( $error[0] ), 'ALREADYEXISTS' ) )
+							throw new Exception( 'Não foi possível renomear a pasta. Nome duplicado.', 205 );
+						else
+							throw new Exception( 'Não foi possível renomear a pasta.', 299);
+					}
+					else
+						return true;
+				}
+				catch( Exception $e )
+				{
+					$this->error = true;
+					$this->error_msg = $e->getCode() . ' - ' . $e->getMessage();
+				}
 			}
-			echo '<pre>';
-			print_r( $this->mailbox );
-			echo '</pre>';
+			return false;
 		}
 
 		/**
@@ -298,6 +378,33 @@
 				return count( $unread );
 			}
 			return null;
+		}
+
+		/**
+		 *
+		 *
+		 *
+		 */
+		public function getMessages()
+		{
+			// $header = imap_headerinfo( $this->imap, 1 );
+			//$header = imap_fetch_overview( $this->imap, 1, FT_UID );
+			// $header = imap_status( $this->imap, $this->server . $this->mailbox, SA_MESSAGES );	
+			$header = array();
+			$emails = imap_search( $this->imap, 'ALL', SE_UID );
+			foreach ( $emails as $uid )
+				$header[$uid] = imap_fetch_overview( $this->imap, $uid, FT_UID );
+
+			$this->log( $header );
+
+			echo $header[0]->subject;
+		}
+
+		private function log( $var )
+		{
+			echo '<pre>';
+			print_r( $var );
+			echo '</pre>';
 		}
 	}
 ?>
