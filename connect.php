@@ -8,7 +8,11 @@
 	$senha = 'senha';
 
 	$mailbox = new TImap( $imap, $usuario, $senha );
-	//$mailbox = new TImap();
+	// $mailbox = new TImap();
+	// $mailbox->renameFolder( 'Steam3', 'Steam2' );
+	// exit;
+	// $mailbox->removeFolder( 'Steam2' );
+	// $mailbox->addFolder( 'Steam2' );
 	// $mailbox->selectMailbox( 'Pessoal' );
 	// echo $mailbox->getNumUnreadMessages();
 	// echo '<br>';
@@ -21,23 +25,33 @@
 	if ( $mailbox->getStatus() )
 	{
 		echo 'OK';
-		//echo '<br>';
-		//echo 'Emails: ' . $mailbox->getNumMsgs();
-		//echo '<br>';
-		//echo 'Recentes: ' . $mailbox->getNumRecent();
-		//$mailbox->changeMailbox( 'Steam' );
-		//echo 'Emails: ' . $mailbox->getNumMsgs();		
-		//echo '<br>';
-		//echo 'Qde de pastas: ' . $mailbox->getNumFolders();
+		// echo '<br>';
+		// echo 'Emails: ' . $mailbox->getNumMsgs();
+		// echo '<br>';
+		// echo 'Recentes: ' . $mailbox->getNumRecent();
+		// $mailbox->changeMailbox( 'Steam' );
+		// echo 'Emails: ' . $mailbox->getNumMsgs();		
+		// echo '<br>';
+		// echo 'Qde de pastas: ' . $mailbox->getNumFolders();
 		$pastas = $mailbox->getFolders();
-		echo '<pre>';
-		print_r( $pastas );
-		echo '</pre>';
+		// echo '<pre>';
+		// print_r( $pastas );
+		// echo '</pre>';
 
-		echo '[ ' . $mailbox->selectMailbox( $pastas[1] ) . ' ]<br>';
-		echo 'Caixa atual: ' . $mailbox->getFolder() . '<br>';
-		echo 'Total emails: ' . $mailbox->getNumMessages() . '<br>';
-		echo 'Emails novos: ' . $mailbox->getNumUnreadMessages() . '<br>';
+		echo '[ ' . $mailbox->selectMailbox( $pastas[4] ) . ' ]<br>';
+		// echo 'Nome: ' . $mailbox->getFolder() . '<br>';
+		// echo 'Emails: ' . $mailbox->getNumMessages() . '<br>';
+		// echo 'Novos: ' . $mailbox->getNumUnreadMessages() . '<br>';
+		$headers = $mailbox->getMessages();
+
+		// foreach( $headers as $header )
+
+		// if ( $mailbox->createFolder( 'Steam3' ) )
+		// if ( $mailbox->removefolder( 'Steam3' ) )
+		// if ( $mailbox->renameFolder( 'Steam3', 'Steam2' ) )
+		// 	echo '<br>Sucesso!<br>';
+		// else
+		// 	echo '<br>'. $mailbox->getError() . '<br>';
 	}
 	else
 	{

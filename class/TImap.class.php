@@ -385,19 +385,42 @@
 		 *
 		 *
 		 */
+		// private function getHeaders( $quantity )
+		// {
+		// 	if( !$quantity )
+		// 		$headers = imap_fetch_overview( $this->imap, "1:{$this->getNumMessages()}", FT_UID );
+		// 	else
+		// 		$headers = imap_fetch_overview( $this->imap, "1:{$quantity}", FT_UID );
+
+		// }
+
 		public function getMessages()
 		{
-			// $header = imap_headerinfo( $this->imap, 1 );
-			//$header = imap_fetch_overview( $this->imap, 1, FT_UID );
-			// $header = imap_status( $this->imap, $this->server . $this->mailbox, SA_MESSAGES );	
-			$header = array();
-			$emails = imap_search( $this->imap, 'ALL', SE_UID );
-			foreach ( $emails as $uid )
-				$header[$uid] = imap_fetch_overview( $this->imap, $uid, FT_UID );
+			$headers = imap_fetch_overview( $this->imap, "1:{$this->getNumMessages()}", FT_UID );
+			// $headers = imap_fetch_overview( $this->imap, 2, FT_UID );
 
-			$this->log( $header );
-
-			echo $header[0]->subject;
+			foreach( $headers as $header => $value)
+			{
+				$aux['subject'] = $value->subject;
+				$aux['from'] = $value->from;
+				$aux['to'] = $value->to;
+				$aux['date'] = $value->date;
+				$aux['answered'] = $value->answered;
+				$aux['seen'] = $value->seen;
+				$emails[$value->uid] = ( object ) $aux;
+			}
+			$this->log( $emails );
+			return $emails;
+		}
+		/**
+		 *
+		 *
+		 *
+		 */
+		public function searchMessages( $string = 'ALL')
+		{
+			$emails = imap_search( $this->imap, $string, SE_UID );
+			$this->log( $emails );
 		}
 
 		private function log( $var )
