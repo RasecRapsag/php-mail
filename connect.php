@@ -33,16 +33,16 @@
 		// echo 'Emails: ' . $mailbox->getNumMsgs();		
 		// echo '<br>';
 		// echo 'Qde de pastas: ' . $mailbox->getNumFolders();
-		$pastas = $mailbox->getFolders();
+		// $pastas = $mailbox->getFolders();
 		// echo '<pre>';
 		// print_r( $pastas );
 		// echo '</pre>';
 
-		echo '[ ' . $mailbox->selectMailbox( $pastas[4] ) . ' ]<br>';
+		// echo '[ ' . $mailbox->selectMailbox( $pastas[4] ) . ' ]<br>';
 		// echo 'Nome: ' . $mailbox->getFolder() . '<br>';
 		// echo 'Emails: ' . $mailbox->getNumMessages() . '<br>';
 		// echo 'Novos: ' . $mailbox->getNumUnreadMessages() . '<br>';
-		$headers = $mailbox->getMessages();
+		// $headers = $mailbox->getMessages();
 
 		// foreach( $headers as $header )
 
@@ -52,6 +52,9 @@
 		// 	echo '<br>Sucesso!<br>';
 		// else
 		// 	echo '<br>'. $mailbox->getError() . '<br>';
+
+		$mailbox->selectMailbox( 'Steam2' );
+		$mailbox->getMessages( 1 );
 	}
 	else
 	{

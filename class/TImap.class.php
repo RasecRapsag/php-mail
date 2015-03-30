@@ -56,6 +56,7 @@
 		 *	@var string
 		 */
 		private $mailbox = null;
+		private $headers = array();
 
 		/**
 		 *	Informa se o último comando teve erro.
@@ -335,7 +336,7 @@
 						elseif ( substr_count( strtoupper( $error[0] ), 'ALREADYEXISTS' ) )
 							throw new Exception( 'Não foi possível renomear a pasta. Nome duplicado.', 205 );
 						else
-							throw new Exception( 'Não foi possível renomear a pasta.', 299);
+							throw new Exception( 'Não foi possível renomear a pasta.', 299 );
 					}
 					else
 						return true;
@@ -381,36 +382,65 @@
 		}
 
 		/**
-		 *
-		 *
-		 *
+		 *	Método que consulta os cabeçalhos dos emails.
+		 *	
+		 *	@access private
+		 *	@param integer $quantity
+		 *	@return void
 		 */
-		// private function getHeaders( $quantity )
-		// {
-		// 	if( !$quantity )
-		// 		$headers = imap_fetch_overview( $this->imap, "1:{$this->getNumMessages()}", FT_UID );
-		// 	else
-		// 		$headers = imap_fetch_overview( $this->imap, "1:{$quantity}", FT_UID );
-
-		// }
-
-		public function getMessages()
+		private function getHeaders( $quantity )
 		{
-			$headers = imap_fetch_overview( $this->imap, "1:{$this->getNumMessages()}", FT_UID );
+			try
+			{
+				if( !$this->mailbox )
+					throw new Exception( 'Nenhuma caixa de correio está selecionada.', 301 );
+				else
+				{
+					if( !$quantity )
+						$headers = imap_fetch_overview( $this->imap, "1:{$this->getNumMessages()}", FT_UID );
+					else
+						$headers = imap_fetch_overview( $this->imap, "1:{$quantity}", FT_UID );
+
+					foreach( $headers as $header => $value)
+					{
+						$email['subject'] = $value->subject;
+						$email['from'] = $value->from;
+						$email['to'] = $value->to;
+						$email['date'] = $value->date;
+						$email['answered'] = $value->answered;
+						$email['seen'] = $value->seen;
+						$emails[$value->uid] = ( object ) $email;
+					}
+					$this->headers = $emails;
+				}					
+			}
+			catch( Exception $e )
+			{
+				$this->error = true;
+				$this->error_msg = $e->getCode() . ' - ' . $e->getMessage();
+			}
+			$this->mailbox = null;
+		}
+
+		public function getMessages( $quantity = 50, $mailbox = null )
+		{
+			// $headers = imap_fetch_overview( $this->imap, "1:{$this->getNumMessages()}", FT_UID );
 			// $headers = imap_fetch_overview( $this->imap, 2, FT_UID );
 
-			foreach( $headers as $header => $value)
-			{
-				$aux['subject'] = $value->subject;
-				$aux['from'] = $value->from;
-				$aux['to'] = $value->to;
-				$aux['date'] = $value->date;
-				$aux['answered'] = $value->answered;
-				$aux['seen'] = $value->seen;
-				$emails[$value->uid] = ( object ) $aux;
-			}
-			$this->log( $emails );
-			return $emails;
+			// foreach( $headers as $header => $value)
+			// {
+			// 	$aux['subject'] = $value->subject;
+			// 	$aux['from'] = $value->from;
+			// 	$aux['to'] = $value->to;
+			// 	$aux['date'] = $value->date;
+			// 	$aux['answered'] = $value->answered;
+			// 	$aux['seen'] = $value->seen;
+			// 	$emails[$value->uid] = ( object ) $aux;
+			// }
+
+			$this->getHeaders( $quantity );
+			$this->log( $this->headers );
+			return $this->headers;
 		}
 		/**
 		 *
@@ -423,7 +453,7 @@
 			$this->log( $emails );
 		}
 
-		private function log( $var )
+		public function log( $var )
 		{
 			echo '<pre>';
 			print_r( $var );
